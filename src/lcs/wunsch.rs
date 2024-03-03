@@ -1,13 +1,7 @@
+use std::cmp::max;
+
 type Chars = Vec<char>;
 type Matrix = Vec<Vec<i32>>;
-
-fn max(a: i32, b: i32) -> i32 {
-    if a > b {
-        a
-    } else {
-        b
-    }
-}
 
 fn create_matrix(rows: usize, cols: usize) -> Matrix {
     vec![vec![0; cols]; rows]
@@ -57,33 +51,29 @@ pub fn diff(seq_1: Chars, seq_2: Chars) -> Chars {
 mod tests {
     use super::*;
 
-    fn base_test(seq_1: Chars, seq_2: Chars, expected: Chars) -> Result<(), String> {
-        let diff = diff(seq_1, seq_2);
-        assert_eq!(diff, expected);
+    fn base_test(seq_1: &str, seq_2: &str, expected: &str) -> Result<(), String> {
+        let diff = diff(get_chars(seq_1), get_chars(seq_2));
+        assert_eq!(diff, get_chars(expected));
         Ok(())
     }
 
     #[test]
     fn check_equals() -> Result<(), String> {
-        base_test(
-            get_chars("ABCDEF"),
-            get_chars("ABCDEF"),
-            get_chars("ABCDEF"),
-        )
+        base_test("ABCDEF", "ABCDEF", "ABCDEF")
     }
 
     #[test]
     fn check_not_equals() -> Result<(), String> {
-        base_test(get_chars("ABCD"), get_chars("XYZW"), get_chars(""))
+        base_test("ABCD", "XYZW", "")
     }
 
     #[test]
     fn check_partical() -> Result<(), String> {
-        base_test(get_chars("AABCXY"), get_chars("XYZ"), get_chars("XY"))
+        base_test("AABCXY", "XYZ", "XY")
     }
 
     #[test]
     fn check_empty() -> Result<(), String> {
-        base_test(get_chars(""), get_chars(""), get_chars(""))
+        base_test("", "", "")
     }
 }
