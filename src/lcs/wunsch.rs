@@ -1,15 +1,11 @@
-use std::cmp::max;
-use super::{Chars, Matrix};
+use std::cmp::{max, Ord};
+use super::Matrix;
 
 fn create_matrix(rows: usize, cols: usize) -> Matrix {
     vec![vec![0; cols]; rows]
 }
 
-pub fn get_chars(text: &str) -> Chars {
-    text.chars().collect()
-}
-
-fn fill_dyn_matrix(x: &Chars, y: &Chars) -> Matrix {
+fn fill_dyn_matrix<T: Ord>(x: &Vec<T>, y: &Vec<T>) -> Matrix {
     let mut matrix = create_matrix(x.len() + 1, y.len() + 1);
     for i in 1..x.len() + 1 {
         for j in 1..y.len() + 1 {
@@ -23,9 +19,9 @@ fn fill_dyn_matrix(x: &Chars, y: &Chars) -> Matrix {
     return matrix;
 }
 
-pub fn diff(x: &Chars, y: &Chars) -> Chars {
+pub fn diff<T: Ord + Copy>(x: &Vec<T>, y: &Vec<T>) -> Vec<T> {
     let matrix = fill_dyn_matrix(&x, &y);
-    let mut lcs: Chars = vec![];
+    let mut lcs: Vec<T> = vec![];
     let mut i = x.len();
     let mut j = y.len();
     while i > 0 && j > 0 {
