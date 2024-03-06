@@ -20,14 +20,14 @@ fn fill_dyn_matrix<T: Ord>(x: &Vec<T>, y: &Vec<T>) -> Matrix {
     return matrix;
 }
 
-pub fn lcs<T: Ord + Copy>(x: &Vec<T>, y: &Vec<T>) -> Vec<T> {
+pub fn lcs<T: Ord + Clone>(x: &Vec<T>, y: &Vec<T>) -> Vec<T> {
     let matrix = fill_dyn_matrix(&x, &y);
     let mut lcs: Vec<T> = vec![];
     let mut i = x.len();
     let mut j = y.len();
     while i > 0 && j > 0 {
         if x[i - 1] == y[j - 1] {
-            lcs.push(x[i - 1]);
+            lcs.push(x[i - 1].clone());
             i -= 1;
             j -= 1;
         } else if matrix[i - 1][j] == matrix[i][j] {
@@ -48,11 +48,11 @@ fn format_line<T: std::fmt::Debug>(line: T, include: bool) -> String {
     }
 }
 
-pub fn diff<T: Ord + Copy + std::fmt::Debug>(x: &Vec<T>, y: &Vec<T>) -> Vec<String> {
+pub fn diff<T: Ord + Clone + std::fmt::Debug>(x: &Vec<T>, y: &Vec<T>) -> Vec<String> {
     let mut _lcs = lcs(&x, &y);
     let mut _diff: Vec<String> = x
         .iter()
-        .map(|line| format_line(line, _lcs.contains(line)))
+        .map(|line| format_line(line, _lcs.contains(&line)))
         .collect();
     return _diff;
 }
