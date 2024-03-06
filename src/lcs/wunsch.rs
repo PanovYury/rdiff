@@ -20,7 +20,7 @@ fn fill_dyn_matrix<T: Ord>(x: &Vec<T>, y: &Vec<T>) -> Matrix {
     return matrix;
 }
 
-pub fn diff<T: Ord + Copy>(x: &Vec<T>, y: &Vec<T>) -> Vec<T> {
+pub fn lcs<T: Ord + Copy>(x: &Vec<T>, y: &Vec<T>) -> Vec<T> {
     let matrix = fill_dyn_matrix(&x, &y);
     let mut lcs: Vec<T> = vec![];
     let mut i = x.len();

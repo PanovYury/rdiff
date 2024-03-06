@@ -1,4 +1,4 @@
-use crate::lcs::wunsch::diff;
+use crate::lcs::wunsch::lcs;
 
 struct TestCase {
     x: &'static str,
@@ -60,7 +60,7 @@ fn _base_test<T>(seq_1: &Vec<T>, seq_2: &Vec<T>, expected: &Vec<T>) -> Result<()
 where
     T: std::fmt::Debug + Ord + Copy,
 {
-    let diff_res = diff::<T>(&seq_1, &seq_2);
+    let diff_res = lcs::<T>(&seq_1, &seq_2);
     assert_eq!(diff_res, *expected);
     Ok(())
 }
