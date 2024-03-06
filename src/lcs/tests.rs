@@ -1,62 +1,86 @@
-use crate::lcs::wunsch::lcs;
+use crate::lcs::wunsch::{diff, lcs};
 
 struct TestCase {
     x: &'static str,
     y: &'static str,
-    expected: &'static str,
+    lcs: &'static str,
+    diff: &'static [&'static str],
 }
 
 struct TestCaseText {
     x: &'static [&'static str],
     y: &'static [&'static str],
-    expected: &'static [&'static str],
+    lcs: &'static [&'static str],
+    diff: &'static [&'static str],
 }
 
 const TEST_CASES: [TestCase; 4] = [
     TestCase {
         x: "ABCDEF",
         y: "ABCDEF",
-        expected: "ABCDEF",
+        lcs: "ABCDEF",
+        diff: &["< 'A'", "< 'B'", "< 'C'", "< 'D'", "< 'E'", "< 'F'"],
     },
     TestCase {
         x: "ABC",
         y: "XYZ",
-        expected: "",
+        lcs: "",
+        diff: &["> 'A'", "> 'B'", "> 'C'",],
     },
     TestCase {
         x: "AABCXY",
         y: "XYZ",
-        expected: "XY",
+        lcs: "XY",
+        diff: &["> 'A'", "> 'A'", "> 'B'", "> 'C'", "< 'X'", "< 'Y'"],
     },
     TestCase {
         x: "",
         y: "",
-        expected: "",
+        lcs: "",
+        diff: &[],
     },
 ];
 
-const TEST_CASES_TEXT: [TestCaseText; 1] = [
+const TEST_CASES_TEXT: &[TestCaseText] = &[
     TestCaseText {
         x: &[
-            "Coding Challenges helps you become a better software engineer through that build real applications.",
-            "I share a weekly coding challenge aimed at helping software engineers level up their skills through deliberate practice.",
-            "I've used or am using these coding challenges as exercise to learn a new programming language or technology.",
-            "Each challenge will have you writing a full application or tool. Most of which will be based on real world tools and utilities."
+            "Line 1 for compare",
+            "Line 2 for compare with change",
+            "Line 3 for compare",
         ],
         y: &[
-            "Helping you become a better software engineer through coding challenges that build real applications.",
-            "I share a weekly coding challenge aimed at helping software engineers level up their skills through deliberate practice.",
-            "These are challenges that I've used or am using as exercises to learn a new programming language or technology.",
-            "Each challenge will have you writing a full application or tool. Most of which will be based on real world tools and utilities."
+            "Line 1 for compare",
+            "Line 2 for compare",
+            "Line 3 for compare",
         ],
-        expected: &[
-            "I share a weekly coding challenge aimed at helping software engineers level up their skills through deliberate practice.",
-            "Each challenge will have you writing a full application or tool. Most of which will be based on real world tools and utilities."
+        lcs: &["Line 1 for compare", "Line 3 for compare"],
+        diff: &[
+            "< \"Line 1 for compare\"",
+            "> \"Line 2 for compare with change\"",
+            "< \"Line 3 for compare\"",
         ],
-    }
+    },
+    TestCaseText {
+        x: &[
+            "Line 1 for compare",
+            "Line 2 for compare with change",
+            "Line 3 for comparing",
+        ],
+        y: &[
+            "Line 1 for compare",
+            "Line 2 for compare",
+            "Line 3 for compare",
+        ],
+        lcs: &["Line 1 for compare"],
+        diff: &[
+            "< \"Line 1 for compare\"",
+            "> \"Line 2 for compare with change\"",
+            "> \"Line 3 for comparing\"",
+        ],
+    },
 ];
 
-fn _base_test<T>(seq_1: &Vec<T>, seq_2: &Vec<T>, expected: &Vec<T>) -> Result<(), String>
+fn _base_test_lcs<T>(seq_1: &Vec<T>, seq_2: &Vec<T>, expected: &Vec<T>) -> Result<(), String>
 where
     T: std::fmt::Debug + Ord + Copy,
 {
@@ -65,24 +89,52 @@ where
     Ok(())
 }
 
+fn _base_test_diff<T>(seq_1: &Vec<T>, seq_2: &Vec<T>, expected: &Vec<&str>) -> Result<(), String>
+where
+    T: std::fmt::Debug + Ord + Copy,
+{
+    let diff_res = diff::<T>(&seq_1, &seq_2);
+    assert_eq!(diff_res, *expected);
+    Ok(())
+}
+
 #[test]
-fn test_chars() {
+fn test_chars_lcs() {
     for case in TEST_CASES {
-        let _ = _base_test::<char>(
+        let _ = _base_test_lcs::<char>(
             &case.x.chars().collect(),
             &case.y.chars().collect(),
-            &case.expected.chars().collect(),
+            &case.lcs.chars().collect(),
         );
     }
 }
 
 #[test]
-fn test_text() {
+fn test_chars_diff() {
+    for case in TEST_CASES {
+        let _ = _base_test_diff::<char>(
+            &case.x.chars().collect(),
+            &case.y.chars().collect(),
+            &Vec::from(case.diff),
+        );
+    }
+}
+
+#[test]
+fn test_text_lcs() {
     for case in TEST_CASES_TEXT {
-        let _ = _base_test::<&str>(
+        let _ =
+            _base_test_lcs::<&str>(&Vec::from(case.x), &Vec::from(case.y), &Vec::from(case.lcs));
+    }
+}
+
+#[test]
+fn test_text_diff() {
+    for case in TEST_CASES_TEXT {
+        let _ = _base_test_diff::<&str>(
             &Vec::from(case.x),
             &Vec::from(case.y),
-            &Vec::from(case.expected),
+            &Vec::from(case.diff),
         );
     }
 }
