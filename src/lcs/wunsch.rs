@@ -39,3 +39,20 @@ pub fn lcs<T: Ord + Copy>(x: &Vec<T>, y: &Vec<T>) -> Vec<T> {
     lcs.reverse();
     return lcs;
 }
+
+fn format_line<T: std::fmt::Debug>(line: T, include: bool) -> String {
+    if include {
+        format!("< {:?}", line)
+    } else {
+        format!("> {:?}", line)
+    }
+}
+
+pub fn diff<T: Ord + Copy + std::fmt::Debug>(x: &Vec<T>, y: &Vec<T>) -> Vec<String> {
+    let mut _lcs = lcs(&x, &y);
+    let mut _diff: Vec<String> = x
+        .iter()
+        .map(|line| format_line(line, _lcs.contains(line)))
+        .collect();
+    return _diff;
+}
