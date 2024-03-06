@@ -1,5 +1,6 @@
 use std::cmp::{max, Ord};
-use super::Matrix;
+
+pub type Matrix = Vec<Vec<i32>>;
 
 fn create_matrix(rows: usize, cols: usize) -> Matrix {
     vec![vec![0; cols]; rows]

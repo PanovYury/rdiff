@@ -1,5 +1,4 @@
 use crate::lcs::wunsch::diff;
-use std::cmp::PartialEq;
 
 struct TestCase {
     x: &'static str,
@@ -57,13 +56,9 @@ const TEST_CASES_TEXT: [TestCaseText; 1] = [
     }
 ];
 
-fn _base_test<T>(
-    seq_1: &Vec<T>,
-    seq_2: &Vec<T>,
-    expected: &Vec<T>,
-) -> Result<(), String>
+fn _base_test<T>(seq_1: &Vec<T>, seq_2: &Vec<T>, expected: &Vec<T>) -> Result<(), String>
 where
-    T: PartialEq + std::fmt::Debug + Ord + Copy,
+    T: std::fmt::Debug + Ord + Copy,
 {
     let diff_res = diff::<T>(&seq_1, &seq_2);
     assert_eq!(diff_res, *expected);
