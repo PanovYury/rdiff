@@ -1,39 +1,75 @@
-use std::cmp::{max, Ord};
+use std::{cmp::{max, Ord}, fmt::Display};
 
-pub type Matrix = Vec<Vec<i32>>;
-
-fn fill_matrix<T: Ord>(x: &Vec<T>, y: &Vec<T>) -> Matrix {
-    let mut matrix = vec![vec![0; y.len() + 1]; x.len() + 1];
+fn lcs_len<T: Ord>(x: &[T], y: &[T]) -> Vec<i32> {
+    let mut matrix = vec![0; y.len() + 1];
     for i in 1..x.len() + 1 {
         for j in 1..y.len() + 1 {
             if x[i - 1] == y[j - 1] {
-                matrix[i][j] = matrix[i - 1][j - 1] + 1
+                matrix[j] = matrix[j] + 1
             } else {
-                matrix[i][j] = max(matrix[i - 1][j], matrix[i][j - 1])
+                matrix[j] = max(matrix[j - 1], matrix[j])
             }
         }
     }
-    return matrix;
+    matrix
 }
 
-pub fn lcs<'a, T: Ord>(x: &'a Vec<T>, y: &Vec<T>) -> Vec<&'a T> {
-    let matrix = fill_matrix(&x, &y);
-    let mut lcs: Vec<&T> = vec![];
-    let mut i = x.len();
-    let mut j = y.len();
-    while i > 0 && j > 0 {
-        if x[i - 1] == y[j - 1] {
-            lcs.push(&x[i - 1]);
-            i -= 1;
-            j -= 1;
-        } else if matrix[i - 1][j] == matrix[i][j] {
-            i -= 1;
-        } else {
-            j -= 1;
+fn lcs_len_reversed<T: Ord>(x: &[T], y: &[T]) -> Vec<i32> {
+    let rev_x = x.iter().rev().collect::<Vec<&T>>();
+    let rev_y = y.iter().rev().collect::<Vec<&T>>();
+    let mut matrix = lcs_len(&rev_x, &rev_y);
+    matrix.reverse();
+    matrix
+}
+
+fn lcs_sum(lcs_1: &Vec<i32>, lcs_2: &Vec<i32>) -> Vec<i32> {
+    lcs_1
+        .iter()
+        .zip(lcs_2.iter())
+        .map(|(a, b)| a + b)
+        .collect::<Vec<i32>>()
+}
+
+fn max_index<T: Ord>(array: &[T]) -> usize {
+    let mut max = (0, &array[0]);
+    for (idx, item) in array.iter().enumerate() {
+        if *item > *max.1 {
+            max = (idx, item);
         }
     }
-    lcs.reverse();
-    return lcs;
+    max.0
+}
+
+pub fn lcs<'a, T: Ord>(x: &'a [T], y: &[T]) -> Vec<&'a T> {
+    match x.len() {
+        0 => vec![],
+        1 => {
+            if y.contains(&x[0]) {
+                vec![&x[0]]
+            } else {
+                vec![]
+            }
+        }
+        _ => {
+            // Split x vector
+            let mid_x = x.len() / 2;
+            let (xb, xe) = (&x[..mid_x], &x[mid_x..]);
+
+            let matrix_l1 = lcs_len(xb, y);
+            let matrix_l2 = lcs_len_reversed(&xe, &y);
+
+            let sum = lcs_sum(&matrix_l1, &matrix_l2);
+
+            // Split y vector
+            let mid_y = max_index(&sum);
+            let (yb, ye) = (&y[..mid_y], &y[mid_y..]);
+
+            let lcs_b = lcs::<T>(xb, yb);
+            let lcs_e = lcs::<T>(xe, ye);
+
+            [lcs_b.as_slice(), lcs_e.as_slice()].concat()
+        }
+    }
 }
 
 pub fn diff<'a, T: Ord>(x: &'a Vec<T>, y: &Vec<T>) -> Vec<(bool, &'a T)> {
@@ -43,10 +79,10 @@ pub fn diff<'a, T: Ord>(x: &'a Vec<T>, y: &Vec<T>) -> Vec<(bool, &'a T)> {
         .collect::<Vec<(bool, &T)>>()
 }
 
-pub fn print_diff<T: std::fmt::Debug>(lines: &Vec<(bool, &T)>) {
+pub fn print_diff<T: Display>(lines: &Vec<(bool, &T)>) {
     for (is_include, line) in lines {
         let _diff_icon = if *is_include { ">" } else { "<" };
-        println!("{} {:?}", _diff_icon, line);
+        println!("{} {}", _diff_icon, line);
     }
 }
 
