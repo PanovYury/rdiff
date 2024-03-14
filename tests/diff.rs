@@ -1,18 +1,35 @@
-use std::{fs::File, io::{BufRead, BufReader}, path::Path};
+use std::time::Instant;
 
 use rdiff::diff::diff;
 
-fn read_lines(filename: impl AsRef<Path>) -> Vec<String> {
-    let file = File::open(filename).expect("No such file");
-    let buff = BufReader::new(file);
-    buff.lines()
-        .map(|line| line.expect("Could not parse line"))
-        .collect()
+// Run with cargo test --test diff -- --nocapture
+
+const TARGET_LINE: &str =
+    "Hello Rust! This line will be use for generate large collections of benchmarks.";
+
+#[test]
+fn test_diff_size_100() {
+    let now = Instant::now();
+    let items = vec![TARGET_LINE; 100];
+    diff(&items, &items);
+    let elapsed = now.elapsed();
+    println!("Size 100: {:.2?}", elapsed);
 }
 
 #[test]
-fn test_diff_filles() {
-    let file_1 = read_lines("./tests/resources/large.txt");
-    let file_2 = read_lines("./tests/resources/large_ch.txt");
-    let _diff = diff(&file_1, &file_2);
+fn test_diff_size_1000() {
+    let now = Instant::now();
+    let items = vec![TARGET_LINE; 1000];
+    diff(&items, &items);
+    let elapsed = now.elapsed();
+    println!("Size 1000: {:.2?}", elapsed);
+}
+
+#[test]
+fn test_diff_size_10000() {
+    let now = Instant::now();
+    let items = vec![TARGET_LINE; 10000];
+    diff(&items, &items);
+    let elapsed = now.elapsed();
+    println!("Size 10000: {:.2?}", elapsed);
 }
