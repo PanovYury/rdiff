@@ -1,4 +1,4 @@
-use std::cmp::{max, Ord};
+use std::{cmp::{max, Ord}, collections::LinkedList};
 
 pub type Matrix = Vec<Vec<i32>>;
 
@@ -18,12 +18,12 @@ fn fill_matrix<T: Ord>(x: &Vec<T>, y: &Vec<T>) -> Matrix {
 
 pub fn lcs<'a, T: Ord>(x: &'a Vec<T>, y: &Vec<T>) -> Vec<&'a T> {
     let matrix = fill_matrix(&x, &y);
-    let mut lcs: Vec<&T> = vec![];
+    let mut lcs = LinkedList::<&T>::new();
     let mut i = x.len();
     let mut j = y.len();
     while i > 0 && j > 0 {
         if x[i - 1] == y[j - 1] {
-            lcs.push(&x[i - 1]);
+            lcs.push_front(&x[i - 1]);
             i -= 1;
             j -= 1;
         } else if matrix[i - 1][j] > matrix[i][j - 1] {
@@ -32,8 +32,7 @@ pub fn lcs<'a, T: Ord>(x: &'a Vec<T>, y: &Vec<T>) -> Vec<&'a T> {
             j -= 1;
         }
     }
-    lcs.reverse();
-    return lcs;
+    return lcs.into_iter().collect();
 }
 
 pub fn diff<'a, T: Ord>(x: &'a Vec<T>, y: &Vec<T>) -> Vec<(bool, &'a T)> {
