@@ -26,7 +26,7 @@ pub fn lcs<'a, T: Ord>(x: &'a Vec<T>, y: &Vec<T>) -> Vec<&'a T> {
             lcs.push(&x[i - 1]);
             i -= 1;
             j -= 1;
-        } else if matrix[i - 1][j] == matrix[i][j] {
+        } else if matrix[i - 1][j] > matrix[i][j - 1] {
             i -= 1;
         } else {
             j -= 1;
@@ -79,6 +79,12 @@ mod tests {
             y: &['A', 'Y', 'C'],
             lcs: &[&'A', &'C'],
             diff: &[(true, &'A'), (false, &'B'), (true, &'C')],
+        },
+        TestCase {
+            x: &['A', 'B', 'C'],
+            y: &['B', 'A', 'C'],
+            lcs: &[&'B', &'C'],
+            diff: &[(false, &'A'), (true, &'B'), (true, &'C')],
         },
     ];
 
