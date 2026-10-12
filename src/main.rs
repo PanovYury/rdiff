@@ -26,6 +26,6 @@ fn main() {
     let file_1 = read_lines(args[1].clone());
     let file_2 = read_lines(args[2].clone());
     let _diff = diff(&file_1, &file_2);
-    
+
     print_diff(&_diff);
 }

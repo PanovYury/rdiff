@@ -1,11 +1,28 @@
-use std::{cmp::{max, Ord}, collections::LinkedList};
+use std::{cmp::max, fmt};
+
+#[derive(Debug, PartialEq)]
+pub enum DiffOp<'a, T> {
+    Unchanged(&'a T),
+    Removed(&'a T),
+    Added(&'a T),
+}
+
+impl<'a, T: fmt::Debug> fmt::Display for DiffOp<'a, T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DiffOp::Unchanged(line) => write!(f, "  {:?}", line),
+            DiffOp::Removed(line) => write!(f, "- {:?}", line),
+            DiffOp::Added(line) => write!(f, "+ {:?}", line),
+        }
+    }
+}
 
 pub type Matrix = Vec<Vec<i32>>;
 
-fn fill_matrix<T: Ord>(x: &Vec<T>, y: &Vec<T>) -> Matrix {
+fn fill_matrix<T: PartialEq>(x: &[T], y: &[T]) -> Matrix {
     let mut matrix = vec![vec![0; y.len() + 1]; x.len() + 1];
-    for i in 1..x.len() + 1 {
-        for j in 1..y.len() + 1 {
+    for i in 1..=x.len() {
+        for j in 1..=y.len() {
             if x[i - 1] == y[j - 1] {
                 matrix[i][j] = matrix[i - 1][j - 1] + 1
             } else {
@@ -13,39 +30,38 @@ fn fill_matrix<T: Ord>(x: &Vec<T>, y: &Vec<T>) -> Matrix {
             }
         }
     }
-    return matrix;
+    matrix
 }
 
-pub fn lcs<'a, T: Ord>(x: &'a Vec<T>, y: &Vec<T>) -> Vec<&'a T> {
-    let matrix = fill_matrix(&x, &y);
-    let mut lcs = LinkedList::<&T>::new();
+pub fn diff<'a, T: PartialEq>(x: &'a [T], y: &'a [T]) -> Vec<DiffOp<'a, T>> {
+    let matrix = fill_matrix(x, y);
+    let mut result = Vec::new();
     let mut i = x.len();
     let mut j = y.len();
-    while i > 0 && j > 0 {
-        if x[i - 1] == y[j - 1] {
-            lcs.push_front(&x[i - 1]);
+
+    while i > 0 || j > 0 {
+        if i > 0 && j > 0 && x[i - 1] == y[j - 1] {
+            result.push(DiffOp::Unchanged(&x[i - 1]));
             i -= 1;
             j -= 1;
-        } else if matrix[i - 1][j] > matrix[i][j - 1] {
-            i -= 1;
-        } else {
+        } else if j > 0 && (i == 0 || matrix[i][j - 1] >= matrix[i - 1][j]) {
+            // Элемент есть в Y, но нет в X (добавлен)
+            result.push(DiffOp::Added(&y[j - 1]));
             j -= 1;
+        } else if i > 0 && (j == 0 || matrix[i][j - 1] < matrix[i - 1][j]) {
+            // Элемент есть в X, но нет в Y (удален)
+            result.push(DiffOp::Removed(&x[i - 1]));
+            i -= 1;
         }
     }
-    return lcs.into_iter().collect();
+
+    result.reverse();
+    result
 }
 
-pub fn diff<'a, T: Ord>(x: &'a Vec<T>, y: &Vec<T>) -> Vec<(bool, &'a T)> {
-    let mut _lcs = lcs(&x, &y);
-    x.iter()
-        .map(|line| (_lcs.contains(&line), line))
-        .collect::<Vec<(bool, &T)>>()
-}
-
-pub fn print_diff<T: std::fmt::Debug>(lines: &Vec<(bool, &T)>) {
-    for (is_include, line) in lines {
-        let _diff_icon = if *is_include { ">" } else { "<" };
-        println!("{} {:?}", _diff_icon, line);
+pub fn print_diff<T: std::fmt::Debug>(diff_ops: &[DiffOp<T>]) {
+    for op in diff_ops {
+        println!("{op}");
     }
 }
 
@@ -56,34 +72,50 @@ mod tests {
     struct TestCase<'a, T> {
         x: &'a [T],
         y: &'a [T],
-        lcs: &'a [&'a T],
-        diff: &'a [(bool, &'a T)],
+        diff: &'a [DiffOp<'a, T>],
     }
 
     const TEST_CASES_CHARS: &[TestCase<char>] = &[
         TestCase {
             x: &['A', 'B', 'C'],
             y: &['A', 'B', 'C'],
-            lcs: &[&'A', &'B', &'C'],
-            diff: &[(true, &'A'), (true, &'B'), (true, &'C')],
+            diff: &[
+                DiffOp::Unchanged(&'A'),
+                DiffOp::Unchanged(&'B'),
+                DiffOp::Unchanged(&'C'),
+            ],
         },
         TestCase {
             x: &['A', 'B', 'C'],
             y: &['X', 'Y', 'Z'],
-            lcs: &[],
-            diff: &[(false, &'A'), (false, &'B'), (false, &'C')],
+            diff: &[
+                DiffOp::Removed(&'A'),
+                DiffOp::Removed(&'B'),
+                DiffOp::Removed(&'C'),
+                DiffOp::Added(&'X'),
+                DiffOp::Added(&'Y'),
+                DiffOp::Added(&'Z'),
+            ],
         },
         TestCase {
             x: &['A', 'B', 'C'],
             y: &['A', 'Y', 'C'],
-            lcs: &[&'A', &'C'],
-            diff: &[(true, &'A'), (false, &'B'), (true, &'C')],
+            diff: &[
+                DiffOp::Unchanged(&'A'),
+                DiffOp::Removed(&'B'),
+                DiffOp::Added(&'Y'),
+                DiffOp::Unchanged(&'C'),
+            ],
         },
         TestCase {
             x: &['A', 'B', 'C'],
             y: &['B', 'A', 'C'],
-            lcs: &[&'B', &'C'],
-            diff: &[(false, &'A'), (true, &'B'), (true, &'C')],
+            diff: &[
+                DiffOp::Removed(&'A'),
+                DiffOp::Unchanged(&'B'),
+                DiffOp::Added(&'A'),
+                DiffOp::Unchanged(&'C'),
+            ],
         },
     ];
 
@@ -91,20 +123,33 @@ mod tests {
         TestCase {
             x: &[1, 2, 3],
             y: &[1, 2, 3],
-            lcs: &[&1, &2, &3],
-            diff: &[(true, &1), (true, &2), (true, &3)],
+            diff: &[
+                DiffOp::Unchanged(&1),
+                DiffOp::Unchanged(&2),
+                DiffOp::Unchanged(&3),
+            ],
         },
         TestCase {
             x: &[1, 2, 3],
             y: &[4, 5, 6],
-            lcs: &[],
-            diff: &[(false, &1), (false, &2), (false, &3)],
+            diff: &[
+                DiffOp::Removed(&1),
+                DiffOp::Removed(&2),
+                DiffOp::Removed(&3),
+                DiffOp::Added(&4),
+                DiffOp::Added(&5),
+                DiffOp::Added(&6),
+            ],
         },
         TestCase {
             x: &[1, 2, 3],
             y: &[1, 5, 3],
-            lcs: &[&1, &3],
-            diff: &[(true, &1), (false, &2), (true, &3)],
+            diff: &[
+                DiffOp::Unchanged(&1),
+                DiffOp::Removed(&2),
+                DiffOp::Added(&5),
+                DiffOp::Unchanged(&3),
+            ],
         },
     ];
 
@@ -120,11 +165,11 @@ mod tests {
                 "Line 2 for compare",
                 "Line 3 for compare",
             ],
-            lcs: &[&"Line 1 for compare", &"Line 3 for compare"],
             diff: &[
-                (true, &"Line 1 for compare"),
-                (false, &"Line 2 for compare with change"),
-                (true, &"Line 3 for compare"),
+                DiffOp::Unchanged(&"Line 1 for compare"),
+                DiffOp::Removed(&"Line 2 for compare with change"),
+                DiffOp::Added(&"Line 2 for compare"),
+                DiffOp::Unchanged(&"Line 3 for compare"),
             ],
         },
         TestCase {
@@ -138,11 +183,12 @@ mod tests {
                 "Line 2 for compare",
                 "Line 3 for compare",
             ],
-            lcs: &[&"Line 1 for compare"],
             diff: &[
-                (true, &"Line 1 for compare"),
-                (false, &"Line 2 for compare with change"),
-                (false, &"Line 3 for comparing"),
+                DiffOp::Unchanged(&"Line 1 for compare"),
+                DiffOp::Removed(&"Line 2 for compare with change"),
+                DiffOp::Removed(&"Line 3 for comparing"),
+                DiffOp::Added(&"Line 2 for compare"),
+                DiffOp::Added(&"Line 3 for compare"),
             ],
         },
     ];
@@ -151,8 +197,7 @@ mod tests {
         for case in test_cases {
             let x = case.x.to_vec();
             let y = case.y.to_vec();
-            assert_eq!(&lcs(&x, &y), &case.lcs.to_vec());
-            assert_eq!(&diff(&x, &y), &case.diff.to_vec());
+            assert_eq!(&diff(&x, &y), &case.diff);
         }
     }
 

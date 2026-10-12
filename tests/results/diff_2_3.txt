@@ -1,3 +1,4 @@
-> "Line 1 for compare"
-> "Line 2 for compare with change"
-< "Line 3 for compare"
+  "Line 1 for compare"
+  "Line 2 for compare with change"
+- "Line 3 for compare"
++ "Line 3 for comparing"
